@@ -2,5 +2,3 @@
 name = "aoe2-rms"
 version = "0.1.0"
 edition = "2021"
-
-[dependencies]
