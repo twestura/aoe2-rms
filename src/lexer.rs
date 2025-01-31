@@ -2,7 +2,7 @@
 
 use std::{
     fs::File,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, Write},
     iter::Peekable,
     path::Path,
     str::Chars,
@@ -46,7 +46,18 @@ pub struct TokenizedFile {
     tokens: Vec<Token>,
 }
 
-// TODO write tokenized file to a string and to a file
+impl TokenizedFile {
+    /// Writes to the file at `path`, overwriting the file if it exists.
+    /// Returns an io error if the writing fails.
+    /// Note that an existing file may still be overwritten even if writing fails.
+    pub fn write_to_path(&self, path: &Path) -> std::io::Result<()> {
+        let mut f = File::create(path)?;
+        for token in self.tokens.iter() {
+            write!(f, "{}", token.get_info().characters)?;
+        }
+        Ok(())
+    }
+}
 
 /// Consumes and returns one token, text or whitespace, from `chars`.
 /// Requires that `chars` contains no newlines, that is, no `\r` and no `\n` characters.
