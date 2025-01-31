@@ -17,6 +17,28 @@ pub struct TokenInfo {
     characters: String,
 }
 
+impl TokenInfo {
+    /// Returns this token's 1-indexed line number.
+    pub fn line_number(&self) -> usize {
+        self.line_number
+    }
+
+    /// Returns this token's 1-indexed start column.
+    pub fn start_column(&self) -> usize {
+        self.start_column
+    }
+
+    /// Returns this token's 1-indexed end column.
+    pub fn end_column(&self) -> usize {
+        self.end_column
+    }
+
+    /// Returns a reference to this token's characters.
+    pub fn characters(&self) -> &str {
+        &self.characters
+    }
+}
+
 /// A token parsed from an RMS file.
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum Token {
@@ -56,6 +78,11 @@ impl TokenizedFile {
             write!(f, "{}", token.get_info().characters)?;
         }
         Ok(())
+    }
+
+    /// Returns a reference to the vector of tokens in this file.
+    pub fn tokens(&self) -> &Vec<Token> {
+        &self.tokens
     }
 }
 

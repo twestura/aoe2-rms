@@ -54,10 +54,6 @@ ol {
   width: max-content;
 }
 
-/* li:hover {
-  background-color: #151515;
-} */
-
 /* Classes for syntax highlighting of tokens. */
 .constant {
   color: blue;
