@@ -87,7 +87,7 @@ impl TokenizedFile {
 }
 
 /// Consumes and returns one token, text or whitespace, from `chars`.
-/// Requires that `chars` contains no newlines, that is, no `\r` and no `\n` characters.
+/// Requires that `chars` contains no line breaks, that is, no `\r` and no `\n` characters.
 /// If `chars` is empty, returns `None`. Otherwise returns `Some(token)`
 /// while consuming the token from `chars`.
 ///
@@ -104,7 +104,7 @@ fn lex_one_token(
     let mut num_chars = 0;
     let is_whitespace = chars.peek()?.is_whitespace();
     while let Some(&c) = chars.peek() {
-        debug_assert!(c != '\r' && c != '\n', "The line has a newline char.");
+        debug_assert!(c != '\r' && c != '\n', "The line has a line feed char.");
         // Stop when detecting a different type of character.
         if is_whitespace ^ c.is_whitespace() {
             break;
@@ -133,11 +133,11 @@ fn lex_one_token(
 ///
 /// Requires that, if `line` contains a linebreak, then the break is at the end.
 /// Requires `line_number >= 1`.
-fn extract_newline(line: &str, line_number: usize) -> (&str, Option<TokenInfo>) {
+fn extract_line_break(line: &str, line_number: usize) -> (&str, Option<TokenInfo>) {
     debug_assert!(line_number >= 1);
     // The debug assertions enforce the precondition of containing the linebreak
     // only at the end. The `line`s are collected from the `lines` of a buffered reader,
-    // which should not produce "internal" newlines.
+    // which should not produce "internal" line breaks.
     if line.ends_with("\r\n") {
         debug_assert!(line.chars().filter(|c| *c == '\r' || *c == '\n').count() == 2);
         // Note `col` is 0-indexed, whereas the start and end columns are 1-indexed.
@@ -193,7 +193,7 @@ pub fn tokenize(path: &Path) -> std::io::Result<TokenizedFile> {
     let mut line_number = 1;
     let mut line = String::new();
     while br.read_line(&mut line)? > 0 {
-        let (line_content, line_break) = extract_newline(&line, line_number);
+        let (line_content, line_break) = extract_line_break(&line, line_number);
         let mut start_column = 1;
         let mut chars = line_content.chars().peekable();
         while let Some(token) = lex_one_token(line_number, start_column, &mut chars) {
@@ -420,18 +420,18 @@ mod tests {
         assert_eq!(info.characters, "  \t \t\t ");
     }
 
-    /// Tests that no newline is extracted from an empty string.
+    /// Tests that no line break is extracted from an empty string.
     #[test]
-    fn extract_newline_empty() {
-        let (content, info) = extract_newline("", 1);
+    fn extract_line_break_empty() {
+        let (content, info) = extract_line_break("", 1);
         assert_eq!(content, "");
         assert!(info.is_none());
     }
 
-    /// Tests that no newline is extracted from a string without an end break.
+    /// Tests that no line breka is extracted from a string without an end break.
     #[test]
-    fn extract_no_newline() {
-        let (content, info) = extract_newline("base_terrain GRASS", 1);
+    fn extract_no_line_break() {
+        let (content, info) = extract_line_break("base_terrain GRASS", 1);
         assert_eq!(content, "base_terrain GRASS");
         assert!(info.is_none());
     }
@@ -439,7 +439,7 @@ mod tests {
     /// Tests extracting a carriage return.
     #[test]
     fn extract_carriage_return_character() {
-        let (content, info) = extract_newline("base_terrain GRASS\r", 1);
+        let (content, info) = extract_line_break("base_terrain GRASS\r", 1);
         assert_eq!(content, "base_terrain GRASS");
         let info = info.unwrap();
         assert_eq!(info.line_number, 1);
@@ -448,10 +448,10 @@ mod tests {
         assert_eq!(info.characters, "\r");
     }
 
-    /// Tests extracting a newline.
+    /// Tests extracting a line feed.
     #[test]
-    fn extract_newline_character() {
-        let (content, info) = extract_newline("base_terrain GRASS\n", 1);
+    fn extract_line_feed_character() {
+        let (content, info) = extract_line_break("base_terrain GRASS\n", 1);
         assert_eq!(content, "base_terrain GRASS");
         let info = info.unwrap();
         assert_eq!(info.line_number, 1);
@@ -462,8 +462,8 @@ mod tests {
 
     /// Tests extracting a `\r\n` sequence.
     #[test]
-    fn extract_newline_sequence() {
-        let (content, info) = extract_newline("base_terrain GRASS\r\n", 1);
+    fn extract_line_break_sequence() {
+        let (content, info) = extract_line_break("base_terrain GRASS\r\n", 1);
         assert_eq!(content, "base_terrain GRASS");
         let info = info.unwrap();
         assert_eq!(info.line_number, 1);
