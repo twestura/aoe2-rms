@@ -5,3 +5,5 @@
 /* Comments may /* also be /* */ nested. */ */
 
 #const BASE_TERRAIN 1 /* WATER */
+
+/* This comment only ends*/ when the delimiter*/ is separated by whitespace. */
