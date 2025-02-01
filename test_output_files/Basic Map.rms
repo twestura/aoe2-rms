@@ -1,0 +1,171 @@
+/*
+ * An example of a basic map script with RMS features.
+ * This creates a "playable" map that supports multiple sizes and game modes.
+ */
+
+start_random
+  percent_chance 50
+    #define GRASS_MAP
+    #const BASE_TERRAIN 0 /* GRASS */
+    #const FOREST_TERRAIN 10 /* FOREST */
+    #const STRAGGLER 349 /* OAKTREE */
+  percent_chance 50
+    #define DESERT_MAP
+    #const BASE_TERRAIN 14 /* DESERT */
+    #const FOREST_TERRAIN 13 /* PALM_DESERT */
+    #const STRAGGLER 351 /* PALMTREE */
+end_random
+
+<PLAYER_SETUP>
+random_placement
+behavior_version 2
+
+<LAND_GENERATION>
+base_terrain BASE_TERRAIN
+enable_waves 0
+create_player_lands {
+  base_terrain BASE_TERRAIN
+}
+
+<ELEVATION_GENERATION>
+/* Sets the number of tiles and clumps individually for each elevation setting. */
+create_elevation 4 {
+  enable_balanced_elevation
+  base_terrain BASE_TERRAIN
+  if MAPSIZE_MINI
+    number_of_tiles 240
+    number_of_clumps 3
+  elseif MAPSIZE_TINY
+    number_of_tiles 560
+    number_of_clumps 6
+  elseif MAPSIZE_SMALL
+    number_of_tiles 840
+    number_of_clumps 9
+  elseif MAPSIZE_MEDIUM
+    number_of_tiles 1120
+    number_of_clumps 11
+  elseif MAPSIZE_NORMAL
+    number_of_tiles 1600
+    number_of_clumps 16
+  elseif MAPSIZE_LARGE
+    number_of_tiles 1920
+    number_of_clumps 19
+  elseif MAPSIZE_HUGE
+    number_of_tiles 2320
+    number_of_clumps 23
+  elseif MAPSIZE_GIANT
+    number_of_tiles 2560
+    number_of_clumps 26
+  elseif MAPSIZE_MASSIVE
+    number_of_tiles 3040
+    number_of_clumps 30
+  elseif MAPSIZE_ENORMOUS
+    number_of_tiles 3600
+    number_of_clumps 36
+  elseif MAPSIZE_COLOSSAL
+    number_of_tiles 4080
+    number_of_clumps 41
+  elseif MAPSIZE_INCREDIBLE
+    number_of_tiles 5200
+    number_of_clumps 52
+  elseif MAPSIZE_MONSTROUS
+    number_of_tiles 6400
+    number_of_clumps 64
+  elseif MAPSIZE_LUDICROUS
+    number_of_tiles 9200
+    number_of_clumps 92
+  endif
+}
+
+<CLIFF_GENERATION>
+if DESERT_MAP
+  cliff_type CT_DESERT
+endif
+min_number_of_cliffs 3
+max_number_of_cliffs 6
+
+<TERRAIN_GENERATION>
+if DESERT_MAP
+  color_correction CC_DESERT
+endif
+
+create_terrain FOREST_TERRAIN {
+  base_terrain BASE_TERRAIN
+  land_percent 12
+  number_of_clumps 10
+  set_avoid_player_start_areas
+  set_scale_by_groups
+}
+
+<OBJECTS_GENERATION>
+create_object HAWK {
+  number_of_objects 4
+  set_scaling_to_map_size
+}
+
+create_object TOWN_CENTER {
+  set_place_for_every_player
+  max_distance_to_players 0
+}
+
+create_object VILLAGER {
+  set_place_for_every_player
+  min_distance_to_players 6
+  max_distance_to_players 6
+}
+
+create_object SCOUT {
+  set_place_for_every_player
+  min_distance_to_players 7
+  max_distance_to_players 9
+}
+
+if REGICIDE
+  create_object KING {
+    set_place_for_every_player
+    min_distance_to_players 7
+    max_distance_to_players 8
+  }
+
+  create_object CASTLE {
+    set_place_for_every_player
+    min_distance_to_players 9
+    max_distance_to_players 11
+    find_closest_to_map_center
+  }
+endif
+
+if EMPIRE_WARS
+  create_object LUMBER_CAMP {
+    set_place_for_every_player
+    place_on_forest_zone
+    find_closest
+    actor_area 1
+    actor_area_radius 2
+  }
+
+  create_object VILLAGER {
+    number_of_objects 4
+    set_place_for_every_player
+    actor_area_to_place_in 1
+  }
+endif
+
+/* Create after the Lumbercamp to avoid having it spawn on a straggler. */
+create_object STRAGGLER {
+  number_of_objects 5
+  set_place_for_every_player
+  set_gaia_object_only
+  temp_min_distance_group_placement 5
+  min_distance_to_players 5
+  max_distance_to_players 8
+}
+
+create_object SHEEP {
+  set_place_for_every_player
+  number_of_objects 4
+  set_loose_grouping
+  min_distance_to_players 7
+  max_distance_to_players 9
+  set_circular_placement
+}

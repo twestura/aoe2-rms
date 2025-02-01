@@ -86,6 +86,15 @@ impl TokenizedFile {
     }
 }
 
+/// Returns `true` if `c` is considered a whitespace character in RMS scripts.
+/// Returns `false` if not.
+///
+/// Note that non-ascii unicode whitespace characters are not considered whitespace
+/// in map scripts.
+pub fn is_whitespace(c: char) -> bool {
+    c.is_ascii_whitespace()
+}
+
 /// Consumes and returns one token, text or whitespace, from `chars`.
 /// Requires that `chars` contains no line breaks, that is, no `\r` and no `\n` characters.
 /// If `chars` is empty, returns `None`. Otherwise returns `Some(token)`
@@ -102,11 +111,11 @@ fn lex_one_token(
     debug_assert!(start_column > 0);
     let mut characters = String::new();
     let mut num_chars = 0;
-    let is_whitespace = chars.peek()?.is_whitespace();
+    let whitespace_token = is_whitespace(*chars.peek()?);
     while let Some(&c) = chars.peek() {
         debug_assert!(c != '\r' && c != '\n', "The line has a line feed char.");
         // Stop when detecting a different type of character.
-        if is_whitespace ^ c.is_whitespace() {
+        if whitespace_token ^ is_whitespace(c) {
             break;
         }
         characters.push(c);
@@ -119,7 +128,7 @@ fn lex_one_token(
         end_column: start_column + num_chars - 1,
         characters,
     };
-    Some(if is_whitespace {
+    Some(if whitespace_token {
         Token::Whitespace(token_info)
     } else {
         Token::Text(token_info)

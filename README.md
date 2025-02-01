@@ -26,3 +26,7 @@ For example, does it have full unicode support?
 Which characters are considered whitespace (e.g. vertical tabs)?
 Where is whitespace needed, such as between an attribute and a curly brace `create_object NAME{`?
 How does Aoe2's parser continue or fail at parsing a token when such a character is encountered?
+
+- Unicode characters that are non-ascii whitespace are not treated as whitespace.
+- There must be whitespace surrounding tokens, otherwise they are included together.
+- In particular, curly braces, zero width spaces, slashes, asterisks, and other characters may be included as identifier names, such as `hello{}{/*}*/_​_`.

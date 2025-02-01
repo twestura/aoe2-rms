@@ -6,7 +6,7 @@
 
 use std::{path::PathBuf, process};
 
-use aoe2_rms::{html_writer, lexer};
+use aoe2_rms::{annotater::AnnotatedFile, html_writer, lexer};
 
 /// Runs the application to transform a map script to a html file.
 /// Accepts as input the names of the files in the `maps` folder to transform.
@@ -73,7 +73,8 @@ fn main() {
         let mut pb = PathBuf::from("out");
         pb.push(path.file_name().unwrap());
         pb.set_extension("html");
-        if let Err(e) = html_writer::write_debug_file(&tokens, &pb) {
+        let annotated_file = AnnotatedFile::annotate(&tokens);
+        if let Err(e) = html_writer::write_annotated_debug_file(&annotated_file, &pb) {
             println!("{e}");
         }
     }

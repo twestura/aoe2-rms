@@ -1,0 +1,7 @@
+/* Comments are weird. They requires spaces around their delimiters. */
+
+#const VAR/*NOT_A_COMMENT*/IABLE 5
+
+/* Comments may /* also be /* */ nested. */ */
+
+#const BASE_TERRAIN 1 /* WATER */
