@@ -97,6 +97,15 @@ fn annotation_card(token: &AnnotatedToken) -> Option<String> {
             } else {
                 String::new()
             };
+            let comment_id = if let Some(annotation) = token.annotation() {
+                if let Some(comment_id) = annotation.comment_id() {
+                    format!(" comment-{comment_id}")
+                } else {
+                    String::new()
+                }
+            } else {
+                String::new()
+            };
 
             let start = token_info.start_column();
             let end = token_info.end_column();
@@ -108,8 +117,7 @@ fn annotation_card(token: &AnnotatedToken) -> Option<String> {
 
             let card = format!("<div>{range_display}</div>",);
             Some(format!(
-                "<span class=\"code-item{}\">{}<div class=\"card\">{}</div></span>",
-                highlight, html, card
+                "<span class=\"code-item{highlight}{comment_id}\">{html}<div class=\"card\">{card}</div></span>",
             ))
         }
         _ => None,

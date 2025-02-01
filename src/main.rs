@@ -100,7 +100,7 @@ fn main() {
     for i in 0..max_comments {
         if let Err(e) = writeln!(
             css_file,
-            ":has(.comment-{i}):hover .comment-{i} {{\n  background-color: #5f5f5f;\n}}\n"
+            ":has(.comment-{i}:hover) .comment-{i} {{\n  background-color: #5f5f5f;\n}}\n"
         ) {
             eprintln!("Could not write to output css file.\n{e}");
             process::exit(1);

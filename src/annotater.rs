@@ -7,12 +7,19 @@ use crate::lexer::{Token, TokenizedFile};
 pub struct Annotation {
     /// The class name used for syntax highlighting this token.
     highlight: Option<String>,
+    /// The Id number for a comment's opening or closing token.
+    comment_id: Option<usize>,
 }
 
 impl Annotation {
     /// Returns the name of the class used for syntax highlighting this token.
     pub fn highlight(&self) -> Option<&str> {
         self.highlight.as_ref().map(|s| &s[..])
+    }
+
+    /// Returns the id of the comment, if present.
+    pub fn comment_id(&self) -> Option<usize> {
+        self.comment_id
     }
 }
 
@@ -41,56 +48,124 @@ impl AnnotatedToken {
 pub struct AnnotatedFile {
     /// The annotated tokens corresponding to the file.
     tokens: Vec<AnnotatedToken>,
+    /// The number of pairs of matching comment delimiters.
+    num_matched_comments: usize,
 }
 
 impl AnnotatedFile {
-    /// Returns the number of matches comment delimiters in this file.
+    /// Returns the number of matching comment delimiters in this file.
     pub fn num_comments(&self) -> usize {
-        0 // TODO
+        self.num_matched_comments
     }
 
     /// TODO
     pub fn annotate(tokenized_file: &TokenizedFile) -> Self {
-        let mut annotated_tokens = Vec::with_capacity(tokenized_file.tokens().len());
-        let mut comment_depth = 0;
-        for token in tokenized_file.tokens() {
-            let mut end_comment = false;
-            if let Token::Text(token_info) = token {
-                match token_info.characters() {
-                    "/*" => {
-                        comment_depth += 1;
-                    }
-                    "*/" => {
-                        // TODO handle mismatched comments
-                        if comment_depth > 0 {
-                            comment_depth -= 1;
-                            if comment_depth == 0 {
-                                end_comment = true;
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            let annotation = if comment_depth > 0 || end_comment {
-                Some(Annotation {
-                    highlight: Some(String::from("comment")),
-                })
-            } else {
-                None
-            };
-            annotated_tokens.push(AnnotatedToken {
-                token: token.clone(),
-                annotation,
-            })
-        }
-        Self {
-            tokens: annotated_tokens,
-        }
+        AnnotationBuilder::new(tokenized_file).build()
     }
 
     /// Reference to the annotated tokens of this file.
     pub fn tokens(&self) -> &Vec<AnnotatedToken> {
         &self.tokens
+    }
+}
+
+/// TODO
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct AnnotationBuilder<'a> {
+    index: usize,
+    comment_id: usize,
+    num_matched_comments: usize,
+    /// The first `usize` is the index in `annotated_tokens` of the open comment token.
+    /// The second `usize` is the comment id of the comment.
+    open_comments: Vec<(usize, usize)>,
+    original_tokens: &'a TokenizedFile,
+    annotated_tokens: Vec<AnnotatedToken>,
+}
+
+impl<'a> AnnotationBuilder<'a> {
+    fn new(original_tokens: &'a TokenizedFile) -> Self {
+        Self {
+            index: 0,
+            comment_id: 0,
+            num_matched_comments: 0,
+            open_comments: vec![],
+            original_tokens,
+            annotated_tokens: Vec::with_capacity(original_tokens.tokens().len()),
+        }
+    }
+
+    fn step(&mut self) -> bool {
+        debug_assert!(self.index < self.original_tokens.tokens().len());
+        // TODO
+        let token = &self.original_tokens.tokens()[self.index];
+
+        if let Token::Text(token_info) = token {
+            match token_info.characters() {
+                "/*" => {
+                    let annotated_token = AnnotatedToken {
+                        token: token.clone(),
+                        annotation: Some(Annotation {
+                            highlight: Some(String::from("comment")),
+                            comment_id: Some(self.comment_id),
+                        }),
+                    };
+                    self.annotated_tokens.push(annotated_token);
+                    self.open_comments.push((self.index, self.comment_id));
+                    self.comment_id += 1;
+                }
+                "*/" => {
+                    if let Some((index, id)) = self.open_comments.pop() {
+                        // TODO add comment index to open token
+                        self.num_matched_comments += 1;
+                        self.annotated_tokens.push(AnnotatedToken {
+                            token: token.clone(),
+                            annotation: Some(Annotation {
+                                highlight: Some(String::from("comment")),
+                                comment_id: Some(id),
+                            }),
+                        })
+                    } else {
+                        // TODO handle mismatched comments properly, for now just avoid highlighting
+                        self.annotated_tokens.push(AnnotatedToken {
+                            token: token.clone(),
+                            annotation: None,
+                        })
+                    }
+                }
+                _ => {
+                    let annotation = if self.open_comments.is_empty() {
+                        None
+                    } else {
+                        Some(Annotation {
+                            highlight: Some(String::from("comment")),
+                            comment_id: None,
+                        })
+                    };
+                    self.annotated_tokens.push(AnnotatedToken {
+                        token: token.clone(),
+                        annotation,
+                    })
+                }
+            }
+        } else {
+            self.annotated_tokens.push(AnnotatedToken {
+                token: token.clone(),
+                annotation: None,
+            })
+        }
+        self.index += 1; // Update the index for the next step.
+                         // Return whether the index is at the end of the file.
+        self.index != self.original_tokens.tokens().len()
+    }
+
+    fn build(mut self) -> AnnotatedFile {
+        for _ in 0..self.original_tokens.tokens().len() {
+            self.step();
+        }
+        // TODO cleanup
+        AnnotatedFile {
+            tokens: self.annotated_tokens,
+            num_matched_comments: self.num_matched_comments,
+        }
     }
 }
