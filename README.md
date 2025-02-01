@@ -30,3 +30,12 @@ How does Aoe2's parser continue or fail at parsing a token when such a character
 - Unicode characters that are non-ascii whitespace are not treated as whitespace.
 - There must be whitespace surrounding tokens, otherwise they are included together.
 - In particular, curly braces, zero width spaces, slashes, asterisks, and other characters may be included as identifier names, such as `hello{}{/*}*/_​_`.
+
+TODOs:
+
+- Improve maintenance of "state" of the annotater.
+- Use CSS to highlight associated comments.
+- Include detail about the token type in the display card.
+- Include error messages (unmatched comment token) in the display card.
+- Note there can be multiple locations of matched/unmatched comment start or end tokens.
+- Warning message about comment start or end tokens that are embedded within other tokens (can be multiple occurrences).
