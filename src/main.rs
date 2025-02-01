@@ -4,7 +4,8 @@
 //! as "simply running the code" may produce different effects as the project
 //! matures.
 
-use std::{path::PathBuf, process};
+use std::io::Write;
+use std::{fs::OpenOptions, path::PathBuf, process};
 
 use aoe2_rms::{annotater::AnnotatedFile, html_writer, lexer};
 
@@ -62,6 +63,7 @@ fn main() {
     }
 
     // Transforms the map files.
+    let mut max_comments = 0;
     for path in files {
         let tokens = match lexer::tokenize(&path) {
             Ok(ts) => ts,
@@ -74,8 +76,34 @@ fn main() {
         pb.push(path.file_name().unwrap());
         pb.set_extension("html");
         let annotated_file = AnnotatedFile::annotate(&tokens);
+        max_comments = max_comments.max(annotated_file.num_comments());
         if let Err(e) = html_writer::write_annotated_debug_file(&annotated_file, &pb) {
             println!("{e}");
+        }
+    }
+
+    // Writes comment match highlight classes to the copied css file.
+    let mut css_file = match OpenOptions::new().append(true).open("out/style.css") {
+        Ok(file) => file,
+        Err(e) => {
+            eprintln!("Could not open output css file.\n{e}");
+            process::exit(1);
+        }
+    };
+    if max_comments > 0 {
+        // Writes a blank line before the comments.
+        if let Err(e) = writeln!(css_file, "") {
+            eprintln!("Could not write to output css file.\n{e}");
+            process::exit(1);
+        }
+    }
+    for i in 0..max_comments {
+        if let Err(e) = writeln!(
+            css_file,
+            ":has(.comment-{i}):hover .comment-{i} {{\n  background-color: #5f5f5f;\n}}\n"
+        ) {
+            eprintln!("Could not write to output css file.\n{e}");
+            process::exit(1);
         }
     }
 }

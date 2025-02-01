@@ -44,6 +44,11 @@ pub struct AnnotatedFile {
 }
 
 impl AnnotatedFile {
+    /// Returns the number of matches comment delimiters in this file.
+    pub fn num_comments(&self) -> usize {
+        0 // TODO
+    }
+
     /// TODO
     pub fn annotate(tokenized_file: &TokenizedFile) -> Self {
         let mut annotated_tokens = Vec::with_capacity(tokenized_file.tokens().len());
