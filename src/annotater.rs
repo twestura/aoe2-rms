@@ -1,6 +1,6 @@
 /* Annotates a tokenized file produced by the lexer. */
 
-use crate::lexer::{Token, TokenizedFile};
+use crate::lexer::{Lexeme, LexemeFile};
 
 /// TODO
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -27,14 +27,14 @@ impl Annotation {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct AnnotatedToken {
     /// The base token.
-    token: Token,
+    token: Lexeme,
     /// Annotated information about the token, if present.
     annotation: Option<Annotation>,
 }
 
 impl AnnotatedToken {
     /// Returns a reference to the underlying token.
-    pub fn token(&self) -> &Token {
+    pub fn token(&self) -> &Lexeme {
         &self.token
     }
     /// Returns the annotation as an optional reference.
@@ -59,7 +59,7 @@ impl AnnotatedFile {
     }
 
     /// TODO
-    pub fn annotate(tokenized_file: &TokenizedFile) -> Self {
+    pub fn annotate(tokenized_file: &LexemeFile) -> Self {
         AnnotationBuilder::new(tokenized_file).build()
     }
 
@@ -78,28 +78,28 @@ struct AnnotationBuilder<'a> {
     /// The first `usize` is the index in `annotated_tokens` of the open comment token.
     /// The second `usize` is the comment id of the comment.
     open_comments: Vec<(usize, usize)>,
-    original_tokens: &'a TokenizedFile,
+    original_tokens: &'a LexemeFile,
     annotated_tokens: Vec<AnnotatedToken>,
 }
 
 impl<'a> AnnotationBuilder<'a> {
-    fn new(original_tokens: &'a TokenizedFile) -> Self {
+    fn new(original_tokens: &'a LexemeFile) -> Self {
         Self {
             index: 0,
             comment_id: 0,
             num_matched_comments: 0,
             open_comments: vec![],
             original_tokens,
-            annotated_tokens: Vec::with_capacity(original_tokens.tokens().len()),
+            annotated_tokens: Vec::with_capacity(original_tokens.lexemes().len()),
         }
     }
 
     fn step(&mut self) -> bool {
-        debug_assert!(self.index < self.original_tokens.tokens().len());
+        debug_assert!(self.index < self.original_tokens.lexemes().len());
         // TODO
-        let token = &self.original_tokens.tokens()[self.index];
+        let token = &self.original_tokens.lexemes()[self.index];
 
-        if let Token::Text(token_info) = token {
+        if let Lexeme::Text(token_info) = token {
             match token_info.characters() {
                 "/*" => {
                     let annotated_token = AnnotatedToken {
@@ -155,11 +155,11 @@ impl<'a> AnnotationBuilder<'a> {
         }
         self.index += 1; // Update the index for the next step.
                          // Return whether the index is at the end of the file.
-        self.index != self.original_tokens.tokens().len()
+        self.index != self.original_tokens.lexemes().len()
     }
 
     fn build(mut self) -> AnnotatedFile {
-        for _ in 0..self.original_tokens.tokens().len() {
+        for _ in 0..self.original_tokens.lexemes().len() {
             self.step();
         }
         // TODO cleanup

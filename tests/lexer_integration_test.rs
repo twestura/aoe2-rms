@@ -13,7 +13,7 @@ fn copy_files() {
             continue;
         }
         let source_text = fs::read_to_string(&path).unwrap();
-        let tokens = lexer::tokenize(&path).unwrap();
+        let tokens = lexer::lex(&path).unwrap();
         let mut pb = PathBuf::from("test_output_files");
         pb.push(path.file_name().unwrap());
         tokens.write_to_path(&pb).unwrap();

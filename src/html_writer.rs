@@ -4,7 +4,7 @@ use std::{fs::File, io::Write, path::Path};
 
 use crate::{
     annotater::{AnnotatedFile, AnnotatedToken},
-    lexer::{Token, TokenizedFile},
+    lexer::{Lexeme, LexemeFile},
 };
 
 /// The `<head>` section of the html file.
@@ -27,7 +27,7 @@ fn transform_text_to_html(s: &str) -> String {
 }
 
 /// TODO
-pub fn write_debug_file(tokens: &TokenizedFile, output: &Path) -> std::io::Result<()> {
+pub fn write_debug_file(tokens: &LexemeFile, output: &Path) -> std::io::Result<()> {
     let mut f = File::create(output)?;
     writeln!(f, "<!DOCTYPE html>")?;
     writeln!(f, "<html lang=\"en\">")?;
@@ -35,22 +35,22 @@ pub fn write_debug_file(tokens: &TokenizedFile, output: &Path) -> std::io::Resul
     writeln!(f, "  <body>")?;
     writeln!(f, "    <ol>")?;
     let mut line_in_progress = false;
-    for token in tokens.tokens() {
+    for token in tokens.lexemes() {
         if !line_in_progress {
             writeln!(f, "      <li>")?;
             write!(f, "        <pre><code>")?;
             line_in_progress = true;
         }
         match token {
-            Token::LineBreak(_token_info) => {
+            Lexeme::LineBreak(_token_info) => {
                 write!(f, "</code></pre>\n")?;
                 writeln!(f, "      </li>")?;
                 line_in_progress = false;
             }
-            Token::Whitespace(token_info) => {
+            Lexeme::Whitespace(token_info) => {
                 write!(f, "{}", token_info.characters())?;
             }
-            Token::Text(token_info) => {
+            Lexeme::Text(token_info) => {
                 let html = transform_text_to_html(token_info.characters());
                 let highlight = ""; // TODO classes for syntax highlighting
                 let start = token_info.start_column();
@@ -86,7 +86,7 @@ pub fn write_debug_file(tokens: &TokenizedFile, output: &Path) -> std::io::Resul
 /// TODO
 fn annotation_card(token: &AnnotatedToken) -> Option<String> {
     match token.token() {
-        Token::Text(token_info) => {
+        Lexeme::Text(token_info) => {
             let html = transform_text_to_html(token_info.characters());
             let highlight = if let Some(annotation) = token.annotation() {
                 if let Some(highlight) = annotation.highlight() {
@@ -143,15 +143,15 @@ pub fn write_annotated_debug_file(
             line_in_progress = true;
         }
         match annotated_token.token() {
-            Token::LineBreak(_token_info) => {
+            Lexeme::LineBreak(_token_info) => {
                 write!(f, "</code></pre>\n")?;
                 writeln!(f, "      </li>")?;
                 line_in_progress = false;
             }
-            Token::Whitespace(token_info) => {
+            Lexeme::Whitespace(token_info) => {
                 write!(f, "{}", transform_text_to_html(token_info.characters()))?;
             }
-            Token::Text(_token_info) => {
+            Lexeme::Text(_token_info) => {
                 write!(f, "{}", annotation_card(annotated_token).unwrap())?;
             }
         }

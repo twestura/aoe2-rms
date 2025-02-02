@@ -3,3 +3,4 @@
 pub mod annotater;
 pub mod html_writer;
 pub mod lexer;
+pub mod tokenizer;

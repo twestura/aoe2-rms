@@ -65,7 +65,7 @@ fn main() {
     // Transforms the map files.
     let mut max_comments = 0;
     for path in files {
-        let tokens = match lexer::tokenize(&path) {
+        let tokens = match lexer::lex(&path) {
             Ok(ts) => ts,
             Err(e) => {
                 eprintln!("{e}");
@@ -106,4 +106,6 @@ fn main() {
             process::exit(1);
         }
     }
+
+    // TODO write css classes for matching curly braces, if statements, and random blocks.
 }

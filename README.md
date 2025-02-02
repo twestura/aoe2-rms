@@ -33,8 +33,10 @@ How does Aoe2's parser continue or fail at parsing a token when such a character
 
 TODOs:
 
+- Update the pipeline to be lexer -> tokenizer -> annotater.
+- Use an enum with better types in the tokenizer, keep the strings for the html writer or other components that will transform the annotated tokens to output.
+- Note that the `read_line` of a `BufReader` does not stop at `\r`, just at `\n`: [https://doc.rust-lang.org/std/io/trait.BufRead.html#method.read_line](https://doc.rust-lang.org/std/io/trait.BufRead.html#method.read_line)
 - Improve maintenance of "state" of the annotater.
-- Use CSS to highlight associated comments.
 - Include detail about the token type in the display card.
 - Include error messages (unmatched comment token) in the display card.
 - Note there can be multiple locations of matched/unmatched comment start or end tokens.
