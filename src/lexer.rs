@@ -11,9 +11,13 @@ use std::{
 /// Information for a lexeme.
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct LexemeInfo {
+    /// The 1-indexed line number of the lexeme.
     line_number: usize,
+    /// The 1-indexed column number of the first character of the lexeme.
     start_column: usize,
+    /// The 1-indexed column number of the final character of hte lexeme.
     end_column: usize,
+    /// The sequence of characters comprising the lexeme.
     characters: String,
 }
 
@@ -42,7 +46,7 @@ impl LexemeInfo {
 /// A lexeme parsed from an RMS file.
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum Lexeme {
-    /// A line break (`/r/n`, `/n`, or `/r`).
+    /// A line break: `\r\n` or `\n`.
     LineBreak(LexemeInfo),
     /// A consecutive sequence of whitespace characters that is not a linebreak.
     Whitespace(LexemeInfo),
@@ -96,7 +100,7 @@ pub fn is_whitespace(c: char) -> bool {
 }
 
 /// Consumes and returns one lexeme, text or whitespace, from `chars`.
-/// Requires that `chars` contains no line breaks, that is, no `\r` and no `\n` characters.
+/// Requires that `chars` contains no line breaks, that is, no `\n` characters.
 /// If `chars` is empty, returns `None`. Otherwise returns `Some(lexeme)`
 /// while consuming the lexeme from `chars`.
 ///
@@ -113,7 +117,7 @@ fn lex_one_lexeme(
     let mut num_chars = 0;
     let whitespace_lexeme = is_whitespace(*chars.peek()?);
     while let Some(&c) = chars.peek() {
-        debug_assert!(c != '\r' && c != '\n', "The line has a line feed char.");
+        debug_assert!(c != '\n', "The line has a line feed char.");
         // Stop when detecting a different type of character.
         if whitespace_lexeme ^ is_whitespace(c) {
             break;
@@ -136,20 +140,19 @@ fn lex_one_lexeme(
 }
 
 /// Returns a pair `(line_content, Some(line_break_info))`.
-/// If `line` ends with a line break sequence, either `\r\n`, `\r`, or `\n`,
+/// If `line` ends with a line break sequence, either `\r\n`, or `\n`,
 /// then that sequence is extracted into the information for a `LineBreak` lexeme,
 /// and the returned `line_content` references the `line` without the ending break.
 ///
 /// Requires that, if `line` contains a linebreak, then the break is at the end.
 /// Requires `line_number >= 1`.
 fn extract_line_break(line: &str, line_number: usize) -> (&str, Option<LexemeInfo>) {
-    // TODO confirm the behavior of the buffered reader not ending at `\r`.
     debug_assert!(line_number >= 1);
     // The debug assertions enforce the precondition of containing the linebreak
     // only at the end. The `line`s are collected from the `lines` of a buffered reader,
     // which should not produce "internal" line breaks.
     if line.ends_with("\r\n") {
-        debug_assert!(line.chars().filter(|c| *c == '\r' || *c == '\n').count() == 2);
+        debug_assert!(line.chars().filter(|c| *c == '\n').count() == 1);
         // Note `col` is 0-indexed, whereas the start and end columns are 1-indexed.
         let col = line.len() - 2;
         (
@@ -161,21 +164,8 @@ fn extract_line_break(line: &str, line_number: usize) -> (&str, Option<LexemeInf
                 characters: String::from("\r\n"),
             }),
         )
-    } else if line.ends_with('\r') {
-        debug_assert!(line.chars().filter(|c| *c == '\r' || *c == '\n').count() == 1);
-        // Note `col` is 0-indexed, whereas the start and end columns are 1-indexed.
-        let col = line.len() - 1;
-        (
-            &line[..col],
-            Some(LexemeInfo {
-                line_number,
-                start_column: col + 1,
-                end_column: col + 1,
-                characters: String::from("\r"),
-            }),
-        )
     } else if line.ends_with('\n') {
-        debug_assert!(line.chars().filter(|c| *c == '\r' || *c == '\n').count() == 1);
+        debug_assert!(line.chars().filter(|c| *c == '\n').count() == 1);
         // Note `col` is 0-indexed, whereas the start and end columns are 1-indexed.
         let col = line.len() - 1;
         (
@@ -188,7 +178,7 @@ fn extract_line_break(line: &str, line_number: usize) -> (&str, Option<LexemeInf
             }),
         )
     } else {
-        debug_assert!(line.chars().filter(|c| *c == '\r' || *c == '\n').count() == 0);
+        debug_assert!(line.chars().filter(|c| *c == '\n').count() == 0);
         (line, None)
     }
 }
@@ -438,7 +428,7 @@ mod tests {
         assert!(info.is_none());
     }
 
-    /// Tests that no line breka is extracted from a string without an end break.
+    /// Tests that no line break is extracted from a string without an end break.
     #[test]
     fn extract_no_line_break() {
         let (content, info) = extract_line_break("base_terrain GRASS", 1);
@@ -446,16 +436,12 @@ mod tests {
         assert!(info.is_none());
     }
 
-    /// Tests extracting a carriage return.
+    /// Tests that a carriage return is not counted as a line break.
     #[test]
-    fn extract_carriage_return_character() {
+    fn extract_no_carriage_return_character() {
         let (content, info) = extract_line_break("base_terrain GRASS\r", 1);
-        assert_eq!(content, "base_terrain GRASS");
-        let info = info.unwrap();
-        assert_eq!(info.line_number, 1);
-        assert_eq!(info.start_column, 19);
-        assert_eq!(info.end_column, 19);
-        assert_eq!(info.characters, "\r");
+        assert_eq!(content, "base_terrain GRASS\r");
+        assert!(info.is_none());
     }
 
     /// Tests extracting a line feed.

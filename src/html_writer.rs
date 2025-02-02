@@ -26,8 +26,12 @@ fn transform_text_to_html(s: &str) -> String {
     s.replace('<', "&lt;").replace('>', "&gt;")
 }
 
-/// TODO
-pub fn write_debug_file(tokens: &LexemeFile, output: &Path) -> std::io::Result<()> {
+/// Writes a debug file using just the lexemes, without tokenization or annotation.
+/// `lexemes` is the map script's sequence of lexemes.
+/// `output` is the path to which the output file is written. If a file already exists, it
+/// is overwritten.
+/// Returns an IO error if there is an error writing to the `output` file.
+pub fn write_debug_file(lexemes: &LexemeFile, output: &Path) -> std::io::Result<()> {
     let mut f = File::create(output)?;
     writeln!(f, "<!DOCTYPE html>")?;
     writeln!(f, "<html lang=\"en\">")?;
@@ -35,7 +39,7 @@ pub fn write_debug_file(tokens: &LexemeFile, output: &Path) -> std::io::Result<(
     writeln!(f, "  <body>")?;
     writeln!(f, "    <ol>")?;
     let mut line_in_progress = false;
-    for token in tokens.lexemes() {
+    for token in lexemes.lexemes() {
         if !line_in_progress {
             writeln!(f, "      <li>")?;
             write!(f, "        <pre><code>")?;
@@ -52,7 +56,6 @@ pub fn write_debug_file(tokens: &LexemeFile, output: &Path) -> std::io::Result<(
             }
             Lexeme::Text(token_info) => {
                 let html = transform_text_to_html(token_info.characters());
-                let highlight = ""; // TODO classes for syntax highlighting
                 let start = token_info.start_column();
                 let end = token_info.end_column();
                 let range_display = if start == end {
@@ -60,12 +63,11 @@ pub fn write_debug_file(tokens: &LexemeFile, output: &Path) -> std::io::Result<(
                 } else {
                     format!("{start}&ndash;{end}")
                 };
-                // TODO more information for the card.
                 let card = format!("<div>{range_display}</div>",);
                 write!(
                     f,
-                    "<span class=\"code-item{}\">{}<div class=\"card\">{}</div></span>",
-                    highlight, html, card
+                    "<span class=\"code-item\">{}<div class=\"card\">{}</div></span>",
+                    html, card
                 )?;
             }
         }
@@ -82,6 +84,8 @@ pub fn write_debug_file(tokens: &LexemeFile, output: &Path) -> std::io::Result<(
     writeln!(f, "</html>")?;
     Ok(())
 }
+
+// TODO tokenized debug file (step before annotation)
 
 /// TODO
 fn annotation_card(token: &AnnotatedToken) -> Option<String> {
