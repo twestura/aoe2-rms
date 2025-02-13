@@ -93,10 +93,20 @@ impl LexemeFile {
 /// Returns `true` if `c` is considered a whitespace character in RMS scripts.
 /// Returns `false` if not.
 ///
-/// Note that non-ascii unicode whitespace characters are not considered whitespace
-/// in map scripts.
+/// There are six characters that are considered whitespace:
+///
+/// - Horizontal Tab: 9
+/// - Line Feed: 10
+/// - Vertical Tab: 11
+/// - Form Feed: 12
+/// - Carriage Return: 13
+/// - Space: 32
+///
+/// All othercharacters are not whitespace. Note that extended ascii characters
+/// such as the no-break space and unicode characters such as the zero-width
+/// space are not considered whitespace.
 pub fn is_whitespace(c: char) -> bool {
-    c.is_ascii_whitespace()
+    c == '\t' || c == '\n' || c == 11u8 as char || c == 12u8 as char || c == '\r' || c == ' '
 }
 
 /// Consumes and returns one lexeme, text or whitespace, from `chars`.
@@ -212,6 +222,69 @@ pub fn lex(path: &Path) -> std::io::Result<LexemeFile> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Tests a horizontal tab is considered whitespace.
+    #[test]
+    fn is_whitespace_t() {
+        assert!(is_whitespace('\t'));
+    }
+
+    /// Tests a line feed is considered whitespace.
+    #[test]
+    fn is_whitespace_n() {
+        assert!(is_whitespace('\n'));
+    }
+
+    /// Tests a vertical tab is considered whitespace.
+    #[test]
+    fn is_whitespace_v() {
+        assert!(is_whitespace(11u8 as char));
+    }
+
+    /// Tests a form feed is considered whitespace.
+    #[test]
+    fn is_whitespace_f() {
+        assert!(is_whitespace(12u8 as char));
+    }
+
+    /// Tests a carriage return is considered whitespace.
+    #[test]
+    fn is_whitespace_r() {
+        assert!(is_whitespace('\r'));
+    }
+
+    /// Tests a space is considered whitespace.
+    #[test]
+    fn is_whitespace_space() {
+        assert!(is_whitespace(' '));
+    }
+
+    /// Tests a no-break space is not considered whitespace.
+    #[test]
+    fn is_not_whitespace_nbsp() {
+        assert!(!is_whitespace(133u8 as char));
+    }
+
+    /// Tests a zero-width space is not considered whitespace.
+    #[test]
+    fn is_not_whitespace_0() {
+        // The string contains a zero-width space as its only unicode character.
+        assert!(!is_whitespace(" ".chars().next().unwrap()));
+    }
+
+    /// Tests that letters and digits are not considered whitespace.
+    #[test]
+    fn is_not_whitespace_alphanum() {
+        for c in 'A'..='Z' {
+            assert!(!is_whitespace(c));
+        }
+        for c in 'a'..='z' {
+            assert!(!is_whitespace(c));
+        }
+        for c in '0'..='9' {
+            assert!(!is_whitespace(c));
+        }
+    }
 
     /// Lexing one lexeme from an empty iterator produces `None`.
     #[test]
