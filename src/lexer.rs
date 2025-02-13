@@ -226,64 +226,124 @@ mod tests {
     /// Tests a horizontal tab is considered whitespace.
     #[test]
     fn is_whitespace_t() {
-        assert!(is_whitespace('\t'));
+        assert!(is_whitespace('\t'))
     }
 
     /// Tests a line feed is considered whitespace.
     #[test]
     fn is_whitespace_n() {
-        assert!(is_whitespace('\n'));
+        assert!(is_whitespace('\n'))
     }
 
     /// Tests a vertical tab is considered whitespace.
     #[test]
     fn is_whitespace_v() {
-        assert!(is_whitespace(11u8 as char));
+        assert!(is_whitespace(11u8 as char))
     }
 
     /// Tests a form feed is considered whitespace.
     #[test]
     fn is_whitespace_f() {
-        assert!(is_whitespace(12u8 as char));
+        assert!(is_whitespace(12u8 as char))
     }
 
     /// Tests a carriage return is considered whitespace.
     #[test]
     fn is_whitespace_r() {
-        assert!(is_whitespace('\r'));
+        assert!(is_whitespace('\r'))
     }
 
     /// Tests a space is considered whitespace.
     #[test]
     fn is_whitespace_space() {
-        assert!(is_whitespace(' '));
+        assert!(is_whitespace(' '))
     }
 
     /// Tests a no-break space is not considered whitespace.
     #[test]
     fn is_not_whitespace_nbsp() {
-        assert!(!is_whitespace(133u8 as char));
+        assert!(!is_whitespace(133u8 as char))
     }
 
     /// Tests a zero-width space is not considered whitespace.
     #[test]
     fn is_not_whitespace_0() {
         // The string contains a zero-width space as its only unicode character.
-        assert!(!is_whitespace(" ".chars().next().unwrap()));
+        assert!(!is_whitespace(" ".chars().next().unwrap()))
     }
 
     /// Tests that letters and digits are not considered whitespace.
     #[test]
     fn is_not_whitespace_alphanum() {
         for c in 'A'..='Z' {
-            assert!(!is_whitespace(c));
+            assert!(!is_whitespace(c))
         }
         for c in 'a'..='z' {
-            assert!(!is_whitespace(c));
+            assert!(!is_whitespace(c))
         }
         for c in '0'..='9' {
-            assert!(!is_whitespace(c));
+            assert!(!is_whitespace(c))
         }
+    }
+
+    /// Tests that the underscore is not considered whitespace.
+    #[test]
+    fn is_not_whitespace_underscore() {
+        assert!(!is_whitespace('_'))
+    }
+
+    /// Tests that the dash is not considered whitespace.
+    #[test]
+    fn is_not_whitespace_dash() {
+        assert!(!is_whitespace('-'))
+    }
+
+    /// Tests that a slash is not considered whitespace.
+    #[test]
+    fn is_not_whitespace_slash() {
+        assert!(!is_whitespace('/'))
+    }
+
+    /// Tests that an asterisk is not considered whitespace.
+    #[test]
+    fn is_not_whitespace_star() {
+        assert!(!is_whitespace('*'))
+    }
+
+    /// Tests that the pound symbol is not considered whitespace.
+    #[test]
+    fn is_not_whitespace_pound() {
+        assert!(!is_whitespace('#'))
+    }
+
+    /// Tests that the opening brace is not considered whitespace.
+    #[test]
+    fn is_not_whitespace_brace_open() {
+        assert!(!is_whitespace('{'))
+    }
+
+    /// Tests that the closing brace is not considered whitespace.
+    #[test]
+    fn is_not_whitespace_brace_close() {
+        assert!(!is_whitespace('}'))
+    }
+
+    /// Tests that the opening parenthesis is not considered whitespace.
+    #[test]
+    fn is_not_whitespace_paren_open() {
+        assert!(!is_whitespace('('))
+    }
+
+    /// Tests that the closing parenthesis is not considered whitespace.
+    #[test]
+    fn is_not_whitespace_paren_close() {
+        assert!(!is_whitespace(')'))
+    }
+
+    /// Tests that the comma is not considered whitespace.
+    #[test]
+    fn is_not_whitespace_comma() {
+        assert!(!is_whitespace(','))
     }
 
     /// Lexing one lexeme from an empty iterator produces `None`.
